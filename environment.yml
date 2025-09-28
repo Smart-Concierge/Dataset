@@ -1,0 +1,31 @@
+# Arquivo de configuração para o ambiente Conda do projeto Portaria Inteligente
+name: portaria-ia
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # --- Core ---
+  - python=3.10
+
+  # --- Análise e Manipulação de Dados ---
+  - pandas
+  - numpy
+
+  # --- Geração de Dados Sintéticos ---
+  - faker
+
+  # --- Visualização de Dados ---
+  - matplotlib
+  - seaborn
+
+  # --- Visualização de Texto / NLP ---
+  - wordcloud           
+
+  # --- Machine Learning ---
+  - scikit-learn
+
+  # --- Ambiente de Desenvolvimento ---
+  - notebook
+  - pip

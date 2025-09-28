@@ -1,0 +1,23 @@
+--- Visão Geral do Dataset ---
+Número total de exemplos: 500
+Número total de colunas (incluindo sub-campos): 18
+
+Lista completa de colunas extraídas do JSON:
+- intent
+- sugestao_acao
+- entities.morador.nome
+- entities.morador.genero
+- entities.visitante.nome
+- entities.visitante.genero
+- entities.destino.tipo
+- entities.destino.identificador
+- metadata.texto_original
+- metadata.timestamp
+- metadata.id_exemplo
+- entities.empresa
+- entities.requer_pagamento
+- entities.sub_intents
+- entities.veiculo.placa
+- entities.veiculo.modelo
+- entities.veiculo.cor
+- entities.tipo_item

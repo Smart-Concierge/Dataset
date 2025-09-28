@@ -1,0 +1,14 @@
+,Contagem
+destino.identificador,300
+destino.tipo,300
+morador.genero,273
+morador.nome,273
+visitante.genero,200
+visitante.nome,200
+empresa,152
+requer_pagamento,143
+sub_intents,100
+veiculo.placa,50
+veiculo.cor,50
+veiculo.modelo,50
+tipo_item,48
