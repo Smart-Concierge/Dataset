@@ -1,0 +1,29 @@
+# Arquivos de instalação
+Miniconda*.sh
+Miniconda*.exe
+
+# Cache e artefatos do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambientes virtuais (Conda e venv)
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Notebooks Jupyter
+.ipynb_checkpoints
+
+# Arquivos de IDEs
+.vscode/
+.idea/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
