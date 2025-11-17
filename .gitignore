@@ -27,3 +27,6 @@ venv.bak/
 # Arquivos de sistema operacional
 .DS_Store
 Thumbs.db
+
+# dataset
+*.jsonl

@@ -70,47 +70,150 @@ def aplicar_variacoes(frase, dificuldade=0.5):
 
     return ' '.join(frase.split())
 
-# --- FUNÇÕES GERADORAS DE EXEMPLOS POR INTENT (INCLUINDO OS "DIFÍCEIS") ---
+# --- NOVA FUNÇÃO AUXILIAR ---
+def _gerar_nome_opcional(genero):
+    """Gera um nome, às vezes completo (60%), às vezes só o primeiro (40%)."""
+    if random.random() < 0.6:
+        # 60% de chance de nome completo
+        return faker.name() 
+    else:
+        # 40% de chance de só o primeiro nome
+        if genero == 'M':
+            return faker.first_name_male()
+        else:
+            return faker.first_name_female()
+
+# --- FUNÇÕES GERADORAS DE EXEMPLOS POR INTENT (ATUALIZADAS) ---
 
 def gerar_entrega_refeicao():
-    nome_morador = faker.name()
-    morador_genero = 'F' # Simplificação para o exemplo
+    # --- Gerar dados base ---
     empresa = random.choice(ENTIDADES_DB["empresas_delivery"])
+    morador_genero = 'F' # Mantendo a lógica original
+    nome_morador = _gerar_nome_opcional(morador_genero) 
     apto = str(random.randint(1, 20) * 100 + random.randint(1, 10))
     
-    entities = {"morador": {"nome": nome_morador, "genero": morador_genero}, "empresa": empresa, "destino": {"tipo": "unidade", "identificador": apto}, "requer_pagamento": random.choice([True, False, None])}
-    
-    frases_possiveis = [f"entrega do {empresa} para o apartamento {apto}", f"tenho um pedido do {empresa} para {nome_morador}", f"é uma entrega para {nome_morador} no apartamento {apto}"]
-    if random.random() < 0.3:
-        frases_possiveis.append(f"delivery do {empresa} para o {apto}"); entities.pop("morador", None)
-    if random.random() < 0.2:
-        item = random.choice(ENTIDADES_DB["tipos_item_entrega"]); frases_possiveis.append(f"entrega de {item} para o apto {apto}"); entities.pop("empresa", None); entities["tipo_item"] = item
+    # --- Entidades base ---
+    entities = {"empresa": empresa, "requer_pagamento": random.choice([True, False, None])}
+    frases_possiveis = []
+
+    # --- Lógica de item especial (pode retornar cedo) ---
+    if random.random() < 0.15: # Reduzi a chance para focar nos outros casos
+        item = random.choice(ENTIDADES_DB["tipos_item_entrega"])
+        frase_item = f"entrega de {item} para o apto {apto}"
+        item_entities = {
+            "tipo_item": item,
+            "destino": {"tipo": "unidade", "identificador": apto},
+            "requer_pagamento": random.choice([True, False, None])
+        }
+        return frase_item, item_entities, "solicitar_entrega_refeicao", "NOTIFICAR_MORADOR"
+
+    # --- DECISÃO: O quão completa é a informação? (40% de chance de estar incompleto) ---
+    if random.random() < 0.4:
+        # --- CASO 1: Incompleto (sem apto) ---
+        
+        # Sub-caso: Tem nome do morador? (50% de chance)
+        if random.random() < 0.5:
+            entities["morador"] = {"nome": nome_morador, "genero": morador_genero}
+            frases_possiveis.extend([
+                f"entrega do {empresa} para {nome_morador}",
+                f"tenho um pedido do {empresa} para {nome_morador}, sabe?"
+            ])
+        else:
+            # O caso mais difícil: só a empresa
+            frases_possiveis.extend([
+                f"é uma entrega do {empresa}",
+                f"delivery do {empresa}",
+                f"tenho um pedido aqui do {empresa}"
+            ])
+    else:
+        # --- CASO 2: Completo (com apto) ---
+        entities["destino"] = {"tipo": "unidade", "identificador": apto}
+        
+        # Sub-caso: Tem nome do morador? (70% de chance)
+        if random.random() < 0.7:
+            entities["morador"] = {"nome": nome_morador, "genero": morador_genero}
+            frases_possiveis.extend([
+                f"entrega do {empresa} para o apartamento {apto}",
+                f"tenho um pedido do {empresa} para {nome_morador} no {apto}",
+                f"é uma entrega para {nome_morador} no apartamento {apto}"
+            ])
+        else:
+            # Completo, mas sem nome (só apto)
+            frases_possiveis.extend([
+                f"delivery do {empresa} para o {apto}",
+                f"entrega do {empresa} pro {apto}"
+            ])
 
     return random.choice(frases_possiveis), entities, "solicitar_entrega_refeicao", "NOTIFICAR_MORADOR"
 
 def gerar_anuncio_visitante():
-    nome_morador = faker.name()
-    morador_genero = 'M' # Simplificação para o exemplo
-    nome_visitante = faker.name()
-    visitante_genero = 'M' # Simplificação para o exemplo
+    # --- Gerar dados base ---
+    morador_genero = 'M' # Original
+    visitante_genero = 'M' # Original
+    nome_morador = _gerar_nome_opcional(morador_genero)
+    nome_visitante = _gerar_nome_opcional(visitante_genero)
     apto = str(random.randint(1, 20) * 100 + random.randint(1, 10))
     
-    entities = {"morador": {"nome": nome_morador, "genero": morador_genero}, "visitante": {"nome": nome_visitante, "genero": visitante_genero}, "destino": {"tipo": "unidade", "identificador": apto}}
-    
-    frases_possiveis = [f"vim visitar {nome_morador} no {apto}, meu nome é {nome_visitante}", f"sou {nome_visitante} e vim ver o morador do {apto}", f"{nome_morador} está me esperando, sou {nome_visitante}"]
+    entities = {"visitante": {"nome": nome_visitante, "genero": visitante_genero}}
+    frases_possiveis = []
+
+    # --- DECISÃO: Tem informação do morador? (80% de chance) ---
+    if random.random() < 0.8:
+        entities["morador"] = {"nome": nome_morador, "genero": morador_genero}
+
+        # DECISÃO: Tem informação do apto? (70% de chance)
+        if random.random() < 0.7:
+            # --- CASO 1: Completo (Morador + Apto) ---
+            entities["destino"] = {"tipo": "unidade", "identificador": apto}
+            frases_possiveis.extend([
+                f"vim visitar {nome_morador} no {apto}, meu nome é {nome_visitante}",
+                f"sou {nome_visitante} e vim ver o morador do {apto}, {nome_morador}",
+                f"{nome_morador} está me esperando no {apto}, sou {nome_visitante}"
+            ])
+        else:
+            # --- CASO 2: Parcial (Morador, sem Apto) ---
+            frases_possiveis.extend([
+                f"vim visitar {nome_morador}, meu nome é {nome_visitante}",
+                f"sou {nome_visitante} e vim ver {nome_morador}",
+                f"{nome_morador} está me esperando, sou {nome_visitante}"
+            ])
+    else:
+        # --- CASO 3: Incompleto (Sem morador, só visitante) ---
+        # Sub-caso: Tem apto? (50% chance)
+        if random.random() < 0.5:
+            entities["destino"] = {"tipo": "unidade", "identificador": apto}
+            frases_possiveis.extend([
+                f"sou {nome_visitante} e vim no apartamento {apto}",
+                f"meu nome é {nome_visitante}, eu vou no {apto}"
+            ])
+        else:
+            # O caso mais difícil: só o visitante
+            frases_possiveis.extend([
+                f"oi, meu nome é {nome_visitante}",
+                f"sou {nome_visitante}, eu pedi pra liberar"
+            ])
+
+    # Escolhe a frase base
     frase = random.choice(frases_possiveis)
     
+    # Lógica original do veículo (preservada)
     if random.random() < 0.25:
         veiculo = {"placa": faker.license_plate(), "modelo": random.choice(ENTIDADES_DB["modelos_veiculo"]), "cor": random.choice(ENTIDADES_DB["cores_veiculo"])}
         entities["veiculo"] = veiculo
         frase += f", estou num {veiculo['modelo']} {veiculo['cor']}"
+        
     return frase, entities, "anunciar_visitante", "NOTIFICAR_MORADOR"
 
 def gerar_informacao_incompleta():
+    # Esta função está boa, pois gera frases cortadas
     frase_base, _, _, _ = random.choice([gerar_entrega_refeicao, gerar_anuncio_visitante])()
     palavras = frase_base.split()
-    ponto_corte = random.randint(len(palavras) // 2, len(palavras) - 1)
-    frase_cortada = " ".join(palavras[:ponto_corte]) + "..."
+    # Garante que o corte não seja muito pequeno
+    if len(palavras) < 3:
+        frase_cortada = " ".join(palavras) + "..."
+    else:
+        ponto_corte = random.randint(len(palavras) // 2, len(palavras) - 1)
+        frase_cortada = " ".join(palavras[:ponto_corte]) + "..."
     return frase_cortada, {}, "informacao_incompleta", "SOLICITAR_MAIS_INFORMACOES"
 
 def gerar_fora_de_escopo():
@@ -118,11 +221,39 @@ def gerar_fora_de_escopo():
     return frase, {}, "fora_de_escopo", "IGNORAR_OU_RESPONDER_GENERICAMENTE"
 
 def gerar_multiplas_intencoes():
-    frase1, entities1, intent1, _ = gerar_anuncio_visitante()
-    frase2, entities2, intent2, _ = gerar_entrega_refeicao()
+    # --- Parte 1: A Visita (Deve ser completa para a frase fazer sentido) ---
     
-    frase_combinada = f"{frase1}, e também vim deixar essa entrega do {entities2.get('empresa','')} para o mesmo apartamento"
+    # Gere os dados básicos
+    morador_genero = 'M'
+    visitante_genero = 'M'
+    nome_morador = _gerar_nome_opcional(morador_genero)
+    nome_visitante = _gerar_nome_opcional(visitante_genero)
+    apto = str(random.randint(1, 20) * 100 + random.randint(1, 10))
     
+    # Force a criação de uma frase de visita completa
+    frase1_options = [
+        f"vim visitar {nome_morador} no {apto}, meu nome é {nome_visitante}",
+        f"sou {nome_visitante} e vim ver o morador do {apto}, {nome_morador}"
+    ]
+    frase1 = random.choice(frase1_options)
+    
+    # Force as entidades de visita completas
+    entities1 = {
+        "morador": {"nome": nome_morador, "genero": morador_genero},
+        "visitante": {"nome": nome_visitante, "genero": visitante_genero},
+        "destino": {"tipo": "unidade", "identificador": apto}
+    }
+    intent1 = "anunciar_visitante"
+
+    # --- Parte 2: A Entrega (simples, só para complementar) ---
+    empresa_entrega = random.choice(ENTIDADES_DB["empresas_delivery"])
+    entities2 = {"empresa": empresa_entrega}
+    intent2 = "solicitar_entrega_refeicao"
+    
+    # --- Combinação ---
+    frase_combinada = f"{frase1}, e também vim deixar essa entrega do {empresa_entrega} para o mesmo apartamento"
+    
+    # Unir entidades
     entities1.update(entities2)
     entities1['sub_intents'] = [intent1, intent2]
 
@@ -136,7 +267,6 @@ def gerar_exemplo_completo(gerador_func, dificuldade):
     
     return {
         "intent": intent, "sugestao_acao": sugestao_acao, "entities": entities,
-        # CORREÇÃO 2: Usando o método moderno para obter o timestamp em UTC
         "metadata": {"texto_original": frase_final, "timestamp": datetime.now(timezone.utc).isoformat(), "id_exemplo": str(uuid.uuid4())}
     }
 
@@ -162,6 +292,7 @@ if __name__ == "__main__":
     for intent_nome, funcao_geradora in geradores_de_intent.items():
         print(f"  - Gerando {num_por_intent} exemplos para o intent '{intent_nome}'...")
         for i in range(num_por_intent):
+            # Distribuição de dificuldade (como no original)
             if i < num_por_intent * 0.2:
                 dificuldade = random.uniform(0.0, 0.3) # Fácil
             elif i < num_por_intent * 0.8:
@@ -174,7 +305,7 @@ if __name__ == "__main__":
             
     random.shuffle(dataset_final)
     
-    nome_arquivo = f"dataset_portaria_profissional_{len(dataset_final)}.jsonl"
+    nome_arquivo = f"dataset_portaria_v2_{len(dataset_final)}.jsonl"
     with open(nome_arquivo, "w", encoding="utf-8") as f:
         for item in dataset_final:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
