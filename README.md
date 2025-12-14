@@ -1,6 +1,6 @@
 # Smart Concierge - NLU Dataset 🗂️
 
-![Language](https://img.shields.io/badge/Language-Portuguese_(pt--BR)-green)
+![Language](https://img.shields.io/badge/Language-English-green)
 ![Format](https://img.shields.io/badge/Format-JSONL-blue)
 ![Task](https://img.shields.io/badge/Task-Intent_Recognition_%26_NER-orange)
 ![License](https://img.shields.io/badge/License-MIT-grey)
