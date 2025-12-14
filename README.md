@@ -1,90 +1,86 @@
-# Projeto Portaria Inteligente
+# Smart Concierge - NLU Dataset 🗂️
 
-Este repositório contém os códigos e datasets para o desenvolvimento do sistema de NLU (Natural Language Understanding) para uma portaria inteligente.
+![Language](https://img.shields.io/badge/Language-Portuguese_(pt--BR)-green)
+![Format](https://img.shields.io/badge/Format-JSONL-blue)
+![Task](https://img.shields.io/badge/Task-Intent_Recognition_%26_NER-orange)
+![License](https://img.shields.io/badge/License-MIT-grey)
 
-## 🚀 Configuração do Ambiente de Desenvolvimento
+This repository contains the dataset used to fine-tune the **Smart Concierge NLU Model**. 
 
-Para garantir que todos os desenvolvedores trabalhem com as mesmas dependências e versões de pacotes, utilizamos um ambiente virtual gerenciado pelo Conda.
+It consists of pairs of **natural language inputs** (simulating transcriptions of voice commands given to a concierge) and their corresponding **structured JSON outputs** (intents and entities). The data is focused on the Brazilian Portuguese context.
 
-### Pré-requisitos
+> **Related Repository:** The model trained on this data can be found at [Smart-Concierge/Model](https://github.com/Smart-Concierge/Model).
 
-O único pré-requisito é ter o **Miniconda** instalado em seu sistema.
+---
 
-<details>
-<summary>🐧 <strong>Clique aqui para ver as instruções de instalação do Miniconda no Linux via terminal.</strong></summary>
+## 📊 Dataset Overview
 
-#### Instalando o Miniconda no Linux
+The dataset is designed to train Small Language Models (SLMs) to perform **Joint Intent Detection and Slot Filling**.
 
-1.  **Baixe o script de instalação:**
-    Abra o terminal e use o comando `curl` para baixar a versão mais recente.
-    ```bash
-    curl -O [https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh)
-    ```
+- **Language:** Brazilian Portuguese (pt-BR)
+- **Format:** JSONL (JSON Lines)
+- **Domain:** Residential Concierge / Condominium Management
+- **Total Samples:** ~5,000 (Approx.)
 
-2.  **Execute o script de instalação:**
-    Este comando instala o Miniconda de forma silenciosa (`-b`) no diretório padrão do seu usuário (`-p $HOME/miniconda`).
-    ```bash
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
-    ```
+## 📝 Data Structure
 
-3.  **Inicialize o Conda no seu Shell:**
-    Este passo configura seu terminal para reconhecer o comando `conda`.
-    ```bash
-    ~/miniconda/bin/conda init bash
-    ```
-    *(Se você usa um shell diferente, como o Zsh, substitua `bash` por `zsh`)*.
+Each line in the dataset represents a single interaction containing the user input and the expected logical output.
 
-4.  **Reinicie o Terminal:**
-    **Feche a janela atual e abra uma nova.** As mudanças só terão efeito em uma nova sessão do terminal. Você deverá ver `(base)` no início do seu prompt.
+### Schema Example
 
-5.  **Verifique a Instalação:**
-    ```bash
-    conda --version
-    ```
-    Se o comando retornar a versão do Conda, a instalação foi bem-sucedida.
+```json
+{
+  "input": "O entregador do iFood chegou, é pra dona Maria do 304 bloco B, pode liberar.",
+  "output": "{\"intent\": \"solicitar_entrega_refeicao\", \"sugestao_acao\": \"NOTIFICAR_MORADOR\", \"entities\": {\"empresa\": \"iFood\", \"requer_pagamento\": false, \"destino\": {\"tipo\": \"unidade\", \"identificador\": \"304\", \"bloco\": \"B\"}, \"nome_morador\": \"Maria\"}}"
+}
+```
 
-</details>
+> **Note:** The `output` field is stored as a stringified JSON to facilitate tokenization during the SFT (Supervised Fine-Tuning) process.
 
-### Passos para a Instalação do Ambiente do Projeto
+---
 
-1.  **Clone o Repositório:**
-    ```bash
-    git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
-    cd seu-repositorio
-    ```
+## 🏷️ Taxonomy & Intents
 
-2.  **Crie o Ambiente Conda:**
-    Use o arquivo `environment.yml` para criar o ambiente com todas as dependências necessárias. O nome do ambiente será `portaria-ia`.
-    ```bash
-    conda env create -f environment.yml
-    ```
-    *Este comando pode levar alguns minutos, pois irá baixar e instalar todos os pacotes.*
+The dataset covers several scenarios typical of a building reception. The main intents (`intent`) include:
 
-3.  **Ative o Ambiente:**
-    Antes de trabalhar no projeto, você **sempre** deve ativar o ambiente recém-criado.
-    ```bash
-    conda activate portaria-ia
-    ```
-    *Você saberá que funcionou pois o nome do seu terminal mudará para `(portaria-ia) ...`*
+| Intent | Description |
+| :--- | :--- |
+| `solicitar_entrega_refeicao` | Delivery of food (e.g., iFood, Pizza). |
+| `solicitar_entrega_encomenda` | General packages (e.g., Amazon, Mercado Livre, Correios). |
+| `anunciar_visitante` | Arrival of a guest or service provider. |
+| `anunciar_prestador_servico` | Specific flow for maintenance/repair workers. |
+| `reservar_espaco` | Booking common areas (Party Hall, BBQ area). |
+| `registrar_ocorrencia` | Noise complaints or maintenance issues. |
+| `autorizar_entrada` | Pre-authorization for future visits. |
 
-4.  **Verifique a Instalação:**
-    Com o ambiente ativo, você pode verificar se os pacotes foram instalados corretamente.
-    ```bash
-    conda list pandas
-    ```
-    *Isso deve mostrar o `pandas` na lista de pacotes instalados.*
+---
 
-Pronto! Seu ambiente está configurado e pronto para ser usado.
+## 🛠️ How to Use
 
-## 📓 Como Usar
+This dataset is intended to be processed before training. If you are using our [Model Training Pipeline](https://github.com/Smart-Concierge/Model), the workflow is:
 
-- **Para desativar o ambiente** quando terminar de trabalhar, use o comando:
-  ```bash
-  conda deactivate
-  ```
+1. **Download the Data:**
+   Clone this repository to get the `.jsonl` files.
 
-- **Para atualizar as bibliotecas** caso o arquivo `environment.yml` seja modificado, use o comando com o ambiente ativo:
-  ```bash
-  conda env update --file environment.yml --prune
-  ```
-  *O comando `--prune` remove pacotes que não estão mais listados no arquivo, mantendo o ambiente limpo.*
+2. **Preprocessing:**
+   Use the `formata_dataset.py` script (located in the Model repo) to convert this raw format into the specific **Phi-3 Chat Template** (`<|user|> ... <|assistant|> ...`).
+
+   ```python
+   # Example of how the data is transformed for the model:
+   formatted_text = f"<|user|>\n{row['input']}<|end|>\n<|assistant|>\n{row['output']}<|end|>"
+   ```
+
+---
+
+## ⚖️ License & Citation
+
+This dataset is released under the **MIT License**.
+
+If you use this dataset in your research or project, please link back to this repository.
+
+**Authors:**
+* Pietro Comin
+* Nathan Endo
+* Lucas Pedroso
+
+*Project developed for the Computer Science Bachelor's degree at UFPR.*
